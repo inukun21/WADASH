@@ -1,0 +1,20 @@
+{
+    "watch": [
+        "server.js",
+        "src/**/*.js",
+        "plugins/**/*.js"
+    ],
+    "ignore": [
+        "node_modules/**",
+        ".next/**",
+        "session/**",
+        "database.json",
+        "*.log"
+    ],
+    "ext": "js,json",
+    "delay": 1000,
+    "verbose": true,
+    "env": {
+        "NODE_ENV": "development"
+    }
+}

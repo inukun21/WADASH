@@ -1,0 +1,7 @@
+{
+  "autoRead": false,
+  "publicMode": true,
+  "botName": "WADASH Bot",
+  "prefix": "!",
+  "welcomeMessage": true
+}

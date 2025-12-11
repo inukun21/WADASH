@@ -11,6 +11,22 @@ WhatsApp Bot dengan Dashboard modern untuk mengelola bot dan session WhatsApp.
 
 📖 **[Dokumentasi Keamanan Lengkap →](SECURITY.md)**
 
+## ☁️ Deploy to Cloud
+
+### Deploy ke Vercel (1-Click)
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/inukun21/WADASH&env=NEXTAUTH_SECRET,NEXTAUTH_URL&envDescription=Environment%20variables%20needed%20for%20WADASH&envLink=https://github.com/inukun21/WADASH/blob/main/.env.example)
+
+**Catatan:** Vercel adalah serverless platform. Untuk WhatsApp bot 24/7, disarankan deploy ke Railway atau Render.
+
+📖 **[Panduan Deployment Lengkap →](DEPLOYMENT.md)**
+
+### Alternative Platforms
+
+- **Railway** - Recommended untuk WhatsApp bot (persistent storage)
+- **Render** - Free tier dengan persistent disk
+- **VPS** - Full control (DigitalOcean, Linode, AWS)
+
 ## 🚀 Getting Started
 
 ### Installation

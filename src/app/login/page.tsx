@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { MessageSquare, ArrowLeft, Eye, EyeOff, Chrome, Github, Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import { signIn } from 'next-auth/react';
 
 export default function LoginPage() {
     const router = useRouter();
@@ -54,9 +55,12 @@ export default function LoginPage() {
         }
     };
 
-    const handleSocialLogin = (provider: string) => {
-        console.log(`Login with ${provider}`);
-        // TODO: Implement social login
+    const handleSocialLogin = async (provider: string) => {
+        if (provider === 'Google') {
+            await signIn('google', { callbackUrl: redirectTo });
+        } else {
+            console.log(`${provider} login not implemented yet`);
+        }
     };
 
     return (
@@ -64,7 +68,7 @@ export default function LoginPage() {
             <div className="w-full max-w-6xl bg-[var(--card-bg)] rounded-[3rem] overflow-hidden shadow-2xl border border-[var(--border)]">
                 <div className="grid md:grid-cols-2 min-h-[600px]">
                     {/* Left Side - Hero Section */}
-                    <div className="relative bg-gradient-to-br from-violet-600 via-fuchsia-600 to-purple-700 p-12 flex flex-col justify-between overflow-hidden">
+                    <div className="relative bg-gradient-to-br from-violet-600 via-fuchsia-600 to-purple-700 p-12 hidden md:flex flex-col justify-between overflow-hidden">
                         {/* Animated Background Elements */}
                         <div className="absolute top-0 left-0 w-full h-full opacity-20">
                             <div className="absolute top-20 left-10 w-32 h-32 bg-white rounded-full blur-3xl animate-pulse" />
@@ -115,15 +119,6 @@ export default function LoginPage() {
                             {error && (
                                 <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl">
                                     <p className="text-red-400 text-sm">{error}</p>
-                                </div>
-                            )}
-
-                            {/* Demo Credentials Info */}
-                            {!isSignUp && (
-                                <div className="p-4 bg-[var(--accent)]/10 border border-[var(--accent)]/20 rounded-xl">
-                                    <p className="text-[var(--accent)] text-sm font-semibold mb-2">Demo Credentials:</p>
-                                    <p className="text-[var(--accent)] text-xs">Email: admin@wadash.com</p>
-                                    <p className="text-[var(--accent)] text-xs">Password: admin123</p>
                                 </div>
                             )}
 

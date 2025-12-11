@@ -1,0 +1,31 @@
+{
+  "webUsers": {
+    "test@example.com": {
+      "email": "test@example.com",
+      "password": "password",
+      "name": "UserTest User",
+      "firstName": "UserTest",
+      "lastName": "User",
+      "role": "user",
+      "createdAt": "2025-12-06T17:56:26.395Z"
+    },
+    "ibnu@wadash.com": {
+      "email": "ibnu@wadash.com",
+      "password": "admin123",
+      "name": "ibnu nur ramadani",
+      "firstName": "ibnu",
+      "lastName": "nur ramadani",
+      "role": "user",
+      "createdAt": "2025-12-06T17:58:54.657Z"
+    },
+    "admin@wadash.com": {
+      "email": "admin@wadash.com",
+      "password": "$2b$10$y4F08ZSXHvJ.7iuKX.m0GOh8H3eJX9yxCSxOOg35edwbGVy2S9nhW",
+      "name": "Admin",
+      "firstName": "Admin",
+      "lastName": "User",
+      "role": "admin",
+      "createdAt": "2025-12-08T16:54:04.230Z"
+    }
+  }
+}

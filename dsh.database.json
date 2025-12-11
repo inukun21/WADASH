@@ -33,9 +33,9 @@
       "role": "admin",
       "createdAt": "2025-12-08T16:54:04.230Z",
       "botSession": {
-        "status": "connected",
-        "phoneNumber": "6283175858167",
-        "connectedAt": 1765467569428,
+        "status": "disconnected",
+        "phoneNumber": null,
+        "connectedAt": null,
         "sessionPath": "session/YWRtaW5Ad2FkYXNoLmNvbQ--"
       }
     }

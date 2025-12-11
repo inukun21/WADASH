@@ -11,37 +11,6 @@ WhatsApp Bot dengan Dashboard modern untuk mengelola bot dan session WhatsApp.
 
 📖 **[Dokumentasi Keamanan Lengkap →](SECURITY.md)**
 
-## ☁️ Deploy to Cloud
-
-### 🚂 Deploy ke Railway (Recommended untuk WhatsApp Bot)
-
-[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/template/wadash?referralCode=inukun21)
-
-**Railway adalah platform terbaik untuk WhatsApp bot 24/7:**
-- ✅ Persistent storage (session tidak hilang)
-- ✅ Always-on containers
-- ✅ $5 free credit
-- ✅ Auto-deploy dari GitHub
-
-📖 **[Panduan Railway Lengkap →](RAILWAY.md)**
-
-### ☁️ Deploy ke Vercel (Untuk Dashboard Only)
-
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/inukun21/WADASH&env=NEXTAUTH_SECRET,NEXTAUTH_URL&envDescription=Environment%20variables%20needed%20for%20WADASH&envLink=https://github.com/inukun21/WADASH/blob/main/.env.example)
-
-**Catatan:** Vercel adalah serverless platform. Untuk WhatsApp bot 24/7, gunakan Railway.
-
-📖 **[Panduan Vercel Lengkap →](DEPLOYMENT.md)**
-
-### 🎯 Platform Comparison
-
-| Platform | WhatsApp Bot 24/7 | Persistent Storage | Free Tier | Setup Time |
-|----------|-------------------|-------------------|-----------|------------|
-| **Railway** ⭐ | ✅ Perfect | ✅ Yes | $5 credit | 5 min |
-| **Vercel** | ⚠️ Limited | ❌ No | ✅ Generous | 2 min |
-| **Render** | ✅ Good | ✅ Yes | 750h/mo | 10 min |
-| **VPS** | ✅ Perfect | ✅ Yes | ❌ Paid | 30+ min |
-
 ## 🚀 Getting Started
 
 ### Installation

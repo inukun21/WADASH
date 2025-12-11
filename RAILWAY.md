@@ -43,8 +43,13 @@ Panduan lengkap untuk deploy WADASH ke Railway - **Platform terbaik untuk WhatsA
    
    Railway akan auto-detect:
    - ✅ Framework: Next.js
-   - ✅ Build Command: `npm run build`
-   - ✅ Start Command: `npm start`
+   - ✅ Install Command: `npm i`
+   - ✅ Build Command: `npm run build` (optional)
+   - ✅ Start Command: `npm run dev`
+
+   **PENTING:** Project ini menggunakan custom server (server.js) dengan Socket.IO, jadi:
+   - Install: `npm i`
+   - Start: `npm run dev` (bukan `npm start`)
 
 #### Step 3: Add Environment Variables
 
@@ -240,7 +245,7 @@ Jika credit habis:
 **Solusi:**
 1. Check application logs
 2. Verify `PORT` environment variable
-3. Pastikan `npm start` command benar
+3. Pastikan `npm run dev` command benar di railway.json
 
 ### Bot Session Hilang
 

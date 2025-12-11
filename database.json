@@ -2,178 +2,43 @@
   "users": {
     "6283175858167@s.whatsapp.net": {
       "jid": "6283175858167@s.whatsapp.net",
-      "name": "I",
+      "name": "",
       "premium": false,
       "limit": 100,
-      "joinedAt": "2025-12-04T16:46:50.632Z"
-    },
-    "128665023213725@lid": {
-      "jid": "128665023213725@lid",
-      "name": "犬🐶",
-      "premium": false,
-      "limit": 100,
-      "joinedAt": "2025-12-04T16:47:02.000Z"
+      "pasangan": "",
+      "joinedAt": "2025-12-11T17:43:29.408Z"
     },
     "120363417721042596@newsletter": {
       "jid": "120363417721042596@newsletter",
       "name": "",
       "premium": false,
       "limit": 100,
-      "joinedAt": "2025-12-04T17:33:13.042Z"
+      "pasangan": "",
+      "joinedAt": "2025-12-11T17:44:15.550Z"
+    },
+    "128665023213725@lid": {
+      "jid": "128665023213725@lid",
+      "name": "I",
+      "premium": false,
+      "limit": 100,
+      "pasangan": "",
+      "joinedAt": "2025-12-11T17:44:38.175Z"
+    },
+    "6285135957662@s.whatsapp.net": {
+      "jid": "6285135957662@s.whatsapp.net",
+      "name": "",
+      "premium": false,
+      "limit": 100,
+      "pasangan": "",
+      "joinedAt": "2025-12-11T17:45:35.933Z"
     },
     "120363271605687655@newsletter": {
       "jid": "120363271605687655@newsletter",
       "name": "",
       "premium": false,
       "limit": 100,
-      "joinedAt": "2025-12-04T17:35:47.180Z"
-    },
-    "6285135957662@s.whatsapp.net": {
-      "jid": "6285135957662@s.whatsapp.net",
-      "name": "I",
-      "premium": false,
-      "limit": 100,
-      "joinedAt": "2025-12-04T17:48:53.487Z"
-    },
-    "62882005294330@s.whatsapp.net": {
-      "jid": "62882005294330@s.whatsapp.net",
-      "name": "I",
-      "premium": false,
-      "limit": 100,
-      "joinedAt": "2025-12-04T18:01:10.008Z"
-    },
-    "120363180127196263@newsletter": {
-      "jid": "120363180127196263@newsletter",
-      "name": "",
-      "premium": false,
-      "limit": 100,
-      "joinedAt": "2025-12-04T18:19:40.115Z"
-    },
-    "status@broadcast": {
-      "jid": "status@broadcast",
-      "name": ".",
-      "premium": false,
-      "limit": 100,
-      "joinedAt": "2025-12-05T14:41:52.432Z"
-    },
-    "146608809361503@lid": {
-      "jid": "146608809361503@lid",
-      "name": "my name",
-      "premium": false,
-      "limit": 100,
-      "joinedAt": "2025-12-05T14:43:24.462Z"
-    },
-    "6285738340938@s.whatsapp.net": {
-      "jid": "6285738340938@s.whatsapp.net",
-      "name": "I",
-      "premium": false,
-      "limit": 100,
-      "joinedAt": "2025-12-05T14:44:06.429Z"
-    },
-    "6283895193810@s.whatsapp.net": {
-      "jid": "6283895193810@s.whatsapp.net",
-      "name": "I",
-      "premium": false,
-      "limit": 100,
-      "joinedAt": "2025-12-05T15:05:45.556Z"
-    },
-    "269522284065002@lid": {
-      "jid": "269522284065002@lid",
-      "name": "tinaaa",
-      "premium": false,
-      "limit": 100,
-      "joinedAt": "2025-12-05T15:08:17.523Z"
-    },
-    "6285727556411@s.whatsapp.net": {
-      "jid": "6285727556411@s.whatsapp.net",
-      "name": "I",
-      "premium": false,
-      "limit": 100,
-      "joinedAt": "2025-12-05T15:08:48.204Z"
-    },
-    "229901026238539@lid": {
-      "jid": "229901026238539@lid",
-      "name": ".",
-      "premium": false,
-      "limit": 100,
-      "joinedAt": "2025-12-05T15:17:23.657Z"
-    },
-    "62895337278647-1632699835@g.us": {
-      "jid": "62895337278647-1632699835@g.us",
-      "name": "Renn",
-      "premium": false,
-      "limit": 100,
-      "joinedAt": "2025-12-05T15:44:00.439Z"
-    },
-    "214052898865317@lid": {
-      "jid": "214052898865317@lid",
-      "name": "jessie",
-      "premium": false,
-      "limit": 100,
-      "joinedAt": "2025-12-05T15:47:02.079Z"
-    },
-    "undefined": {
-      "name": "",
-      "premium": false,
-      "limit": 100,
-      "pasangan": "6285135957662@s.whatsapp.net",
-      "joinedAt": "2025-12-05T16:32:35.233Z"
-    },
-    "12525151474-1612930187@g.us": {
-      "jid": "12525151474-1612930187@g.us",
-      "name": "犬🐶",
-      "premium": false,
-      "limit": 100,
       "pasangan": "",
-      "joinedAt": "2025-12-05T16:36:14.473Z"
-    },
-    "6287834993722@s.whatsapp.net": {
-      "jid": "6287834993722@s.whatsapp.net",
-      "name": "",
-      "premium": false,
-      "limit": 100,
-      "pasangan": "",
-      "joinedAt": "2025-12-05T16:36:32.780Z"
-    },
-    "25632952045621@s.whatsapp.net": {
-      "jid": "25632952045621@s.whatsapp.net",
-      "name": "",
-      "premium": false,
-      "limit": 100,
-      "pasangan": "",
-      "joinedAt": "2025-12-05T16:37:32.854Z"
-    },
-    "120363141649807443@g.us": {
-      "jid": "120363141649807443@g.us",
-      "name": "I",
-      "premium": false,
-      "limit": 100,
-      "pasangan": "",
-      "joinedAt": "2025-12-06T14:35:58.988Z"
-    },
-    "189661544722561@lid": {
-      "jid": "189661544722561@lid",
-      "name": "I",
-      "premium": false,
-      "limit": 100,
-      "pasangan": "",
-      "joinedAt": "2025-12-11T15:09:52.866Z"
-    },
-    "242816512995391@lid": {
-      "jid": "242816512995391@lid",
-      "name": ".",
-      "premium": false,
-      "limit": 100,
-      "pasangan": "",
-      "joinedAt": "2025-12-11T15:14:25.312Z"
-    },
-    "120363332354098025@g.us": {
-      "jid": "120363332354098025@g.us",
-      "name": "riski topik.",
-      "premium": false,
-      "limit": 100,
-      "pasangan": "",
-      "joinedAt": "2025-12-11T15:15:03.032Z"
+      "joinedAt": "2025-12-11T17:45:45.309Z"
     },
     "25632952045621@lid": {
       "jid": "25632952045621@lid",
@@ -181,7 +46,7 @@
       "premium": false,
       "limit": 100,
       "pasangan": "",
-      "joinedAt": "2025-12-11T15:22:39.848Z"
+      "joinedAt": "2025-12-11T17:45:58.354Z"
     }
   }
 }

@@ -7,48 +7,53 @@ const WHATSAPP_DB_PATH = path.join(process.cwd(), 'database.json');
 const WEB_DB_PATH = path.join(process.cwd(), 'dsh.database.json');
 const OLD_DB_PATH = path.join(process.cwd(), 'dsh.database.json');
 
-let whatsappDb = { users: {} };
-let webDb = { webUsers: {} };
+const whatsappDbs = {};
 
-// Initialize WhatsApp Database (database.json)
-const initWhatsAppDb = () => {
-    if (fs.existsSync(WHATSAPP_DB_PATH)) {
-        try {
-            const data = fs.readFileSync(WHATSAPP_DB_PATH, 'utf-8');
-            if (data.trim()) {
-                const parsed = JSON.parse(data);
-                whatsappDb = {
-                    users: parsed.users || {}
-                };
-            }
-        } catch (e) {
-            console.error('Failed to load WhatsApp database:', e);
-            const backupPath = WHATSAPP_DB_PATH + '.backup.' + Date.now();
+// Helper to get sanitized filename
+const getDbPath = (ownerId) => {
+    // Basic sanitization
+    const safeId = ownerId.replace(/[^a-z0-9@.]/gi, '_').toLowerCase();
+    return path.join(process.cwd(), `database.${safeId}.json`);
+};
+
+// Initialize/Get WhatsApp Database for specific owner
+const getWhatsAppDb = (ownerId) => {
+    if (!whatsappDbs[ownerId]) {
+        const dbPath = getDbPath(ownerId);
+        if (fs.existsSync(dbPath)) {
             try {
-                fs.copyFileSync(WHATSAPP_DB_PATH, backupPath);
-                console.log('Corrupted WhatsApp database backed up to:', backupPath);
-            } catch (backupError) {
-                console.error('Failed to backup corrupted database:', backupError);
-            }
-            whatsappDb = { users: {} };
-        }
-    } else {
-        // Check if old combined database exists and migrate
-        if (fs.existsSync(OLD_DB_PATH)) {
-            try {
-                const data = fs.readFileSync(OLD_DB_PATH, 'utf-8');
+                const data = fs.readFileSync(dbPath, 'utf-8');
                 if (data.trim()) {
                     const parsed = JSON.parse(data);
-                    if (parsed.users) {
-                        whatsappDb = { users: parsed.users };
-                        console.log('Migrated WhatsApp users from old database');
-                    }
+                    whatsappDbs[ownerId] = {
+                        users: parsed.users || {}
+                    };
+                } else {
+                    whatsappDbs[ownerId] = { users: {} };
                 }
             } catch (e) {
-                console.error('Failed to migrate from old database:', e);
+                console.error(`Failed to load WhatsApp database for ${ownerId}:`, e);
+                whatsappDbs[ownerId] = { users: {} };
             }
+        } else {
+            // New database for this user
+            whatsappDbs[ownerId] = { users: {} };
+            saveWhatsAppDb(ownerId);
         }
-        saveWhatsAppDb();
+    }
+    return whatsappDbs[ownerId];
+};
+
+let webDb = { webUsers: {} };
+
+// Save Web Database
+export const saveWebDb = () => {
+    try {
+        const tempPath = WEB_DB_PATH + '.tmp';
+        fs.writeFileSync(tempPath, JSON.stringify(webDb, null, 2));
+        fs.renameSync(tempPath, WEB_DB_PATH);
+    } catch (e) {
+        console.error('Failed to save Web database:', e);
     }
 };
 
@@ -94,35 +99,40 @@ const initWebDb = () => {
     }
 };
 
-// Initialize both databases
-initWhatsAppDb();
 initWebDb();
 
-// Save functions
-export const saveWhatsAppDb = () => {
+// Save WhatsApp Database for specific owner
+export const saveWhatsAppDb = (ownerId) => {
     try {
-        const tempPath = WHATSAPP_DB_PATH + '.tmp';
-        fs.writeFileSync(tempPath, JSON.stringify(whatsappDb, null, 2));
-        fs.renameSync(tempPath, WHATSAPP_DB_PATH);
+        if (!whatsappDbs[ownerId]) return;
+
+        const dbPath = getDbPath(ownerId);
+        const tempPath = dbPath + '.tmp';
+        fs.writeFileSync(tempPath, JSON.stringify(whatsappDbs[ownerId], null, 2));
+        fs.renameSync(tempPath, dbPath);
+
+        // Emit update to owner's room
+        if (global.io) {
+            global.io.to(ownerId).emit('whatsapp-users-updated', {
+                users: whatsappDbs[ownerId].users
+            });
+        }
     } catch (e) {
-        console.error('Failed to save WhatsApp database:', e);
+        console.error(`Failed to save WhatsApp database for ${ownerId}:`, e);
     }
 };
 
-export const saveWebDb = () => {
-    try {
-        const tempPath = WEB_DB_PATH + '.tmp';
-        fs.writeFileSync(tempPath, JSON.stringify(webDb, null, 2));
-        fs.renameSync(tempPath, WEB_DB_PATH);
-    } catch (e) {
-        console.error('Failed to save Web database:', e);
+// WhatsApp User Functions (Now scoped by ownerId)
+export const getUser = (ownerId, jid) => {
+    if (!ownerId) {
+        console.error('getUser called without ownerId');
+        return null;
     }
-};
 
-// WhatsApp User Functions
-export const getUser = (jid) => {
-    if (!whatsappDb.users[jid]) {
-        whatsappDb.users[jid] = {
+    const db = getWhatsAppDb(ownerId);
+
+    if (!db.users[jid]) {
+        db.users[jid] = {
             jid,
             name: '',
             premium: false,
@@ -130,20 +140,24 @@ export const getUser = (jid) => {
             pasangan: '', // Partner/relationship field
             joinedAt: new Date().toISOString()
         };
-        saveWhatsAppDb();
+        saveWhatsAppDb(ownerId);
     }
-    return whatsappDb.users[jid];
+    return db.users[jid];
 };
 
-export const updateUser = (jid, data) => {
-    if (whatsappDb.users[jid]) {
-        whatsappDb.users[jid] = { ...whatsappDb.users[jid], ...data };
-        saveWhatsAppDb();
+export const updateUser = (ownerId, jid, data) => {
+    if (!ownerId) return;
+    const db = getWhatsAppDb(ownerId);
+
+    if (db.users[jid]) {
+        db.users[jid] = { ...db.users[jid], ...data };
+        saveWhatsAppDb(ownerId);
     }
 };
 
-export const getAllUsers = () => {
-    return whatsappDb.users;
+export const getAllUsers = (ownerId) => {
+    if (!ownerId) return {};
+    return getWhatsAppDb(ownerId).users;
 };
 
 // Web/Dashboard User Functions
@@ -219,9 +233,9 @@ export const saveDb = () => {
 // Bot Session Management Functions
 export const getUserBotSession = (email) => {
     const user = webDb.webUsers?.[email];
-    
+
     if (!user) return null;
-    
+
     return user.botSession || {
         status: 'disconnected',
         phoneNumber: null,
@@ -235,7 +249,7 @@ export const updateUserBotSession = (email, sessionData) => {
         console.error(`User ${email} not found`);
         return false;
     }
-    
+
     if (!webDb.webUsers[email].botSession) {
         webDb.webUsers[email].botSession = {
             status: 'disconnected',
@@ -244,19 +258,19 @@ export const updateUserBotSession = (email, sessionData) => {
             sessionPath: `session/${Buffer.from(email).toString('base64').replace(/[/+=]/g, '-')}`
         };
     }
-    
+
     webDb.webUsers[email].botSession = {
         ...webDb.webUsers[email].botSession,
         ...sessionData
     };
-    
+
     saveWebDb();
     return true;
 };
 
 export const getAllActiveBots = () => {
     const activeBots = [];
-    
+
     for (const [email, user] of Object.entries(webDb.webUsers || {})) {
         if (user.botSession && user.botSession.status === 'connected') {
             activeBots.push({
@@ -268,7 +282,7 @@ export const getAllActiveBots = () => {
             });
         }
     }
-    
+
     return activeBots;
 };
 
@@ -276,7 +290,7 @@ export const clearUserBotSession = (email) => {
     if (!webDb.webUsers?.[email]) {
         return false;
     }
-    
+
     if (webDb.webUsers[email].botSession) {
         const sessionPath = webDb.webUsers[email].botSession.sessionPath;
         webDb.webUsers[email].botSession = {
@@ -287,6 +301,6 @@ export const clearUserBotSession = (email) => {
         };
         saveWebDb();
     }
-    
+
     return true;
 };

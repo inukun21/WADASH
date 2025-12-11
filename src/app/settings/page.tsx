@@ -61,6 +61,63 @@ export default function SettingsPage() {
         }
     };
 
+    const handleRestartBot = async () => {
+        setMessage({ type: '', text: '' });
+        try {
+            const res = await fetch('/api/bot', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'stop' })
+            });
+
+            if (res.ok) {
+                // Wait a bit then start
+                setTimeout(async () => {
+                    const resStart = await fetch('/api/bot', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ action: 'start' })
+                    });
+
+                    if (resStart.ok) {
+                        setMessage({ type: 'success', text: 'Bot restarted successfully!' });
+                        setTimeout(() => setMessage({ type: '', text: '' }), 3000);
+                    } else {
+                        setMessage({ type: 'error', text: 'Failed to start bot' });
+                    }
+                }, 1000);
+            } else {
+                setMessage({ type: 'error', text: 'Failed to stop bot' });
+            }
+        } catch (error) {
+            setMessage({ type: 'error', text: 'Network error' });
+        }
+    };
+
+    const handleDeleteSession = async () => {
+        if (!confirm('Are you sure you want to delete your session? This will disconnect the bot.')) return;
+
+        setMessage({ type: '', text: '' });
+        try {
+            const res = await fetch('/api/bot', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'deleteSession' })
+            });
+
+            const data = await res.json();
+
+            if (res.ok) {
+                setMessage({ type: 'success', text: 'Session deleted successfully!' });
+                setTimeout(() => setMessage({ type: '', text: '' }), 3000);
+            } else {
+                setMessage({ type: 'error', text: data.error || 'Failed to delete session' });
+            }
+        } catch (error) {
+            setMessage({ type: 'error', text: 'Network error' });
+        }
+    };
+
     return (
         <div className="space-y-8 animate-fade-in">
             {/* Header */}
@@ -188,7 +245,10 @@ export default function SettingsPage() {
                         </div>
 
                         <div className="space-y-4">
-                            <button className="w-full flex items-center justify-between p-4 bg-[var(--foreground)]/5 hover:bg-[var(--foreground)]/10 rounded-xl transition-colors group">
+                            <button
+                                onClick={handleRestartBot}
+                                className="w-full flex items-center justify-between p-4 bg-[var(--foreground)]/5 hover:bg-[var(--foreground)]/10 rounded-xl transition-colors group"
+                            >
                                 <div className="flex items-center gap-3">
                                     <RefreshCw className="w-5 h-5 text-[var(--muted)] group-hover:text-[var(--foreground)] transition-colors" />
                                     <span className="text-[var(--foreground)] group-hover:text-[var(--foreground)]">Restart Bot</span>
@@ -197,7 +257,10 @@ export default function SettingsPage() {
 
                             <div className="pt-4 border-t border-[var(--border)]">
                                 <h3 className="text-red-400 font-medium mb-2 text-sm uppercase tracking-wider">Danger Zone</h3>
-                                <button className="w-full flex items-center justify-between p-4 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 rounded-xl transition-colors group">
+                                <button
+                                    onClick={handleDeleteSession}
+                                    className="w-full flex items-center justify-between p-4 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 rounded-xl transition-colors group"
+                                >
                                     <div className="flex items-center gap-3">
                                         <Trash2 className="w-5 h-5 text-red-400" />
                                         <span className="text-red-400 font-medium">Delete Session</span>

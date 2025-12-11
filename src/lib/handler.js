@@ -122,17 +122,23 @@ if (typeof global !== 'undefined') {
 // Initial load
 loadPlugins();
 
-export const handleMessage = async (sock, msg) => {
+export const handleMessage = async (sock, msg, ownerId) => {
     if (!msg.message) return;
 
+    // Reject if no ownerId
+    if (!ownerId) {
+        console.error('handleMessage called without ownerId');
+        return;
+    }
+
     const remoteJid = msg.key.remoteJid;
-    const user = getUser(remoteJid); // Ensure user exists in DB
+    const user = getUser(ownerId, remoteJid); // Ensure user exists in DB
 
     const messageContent = msg.message.conversation || msg.message.extendedTextMessage?.text || msg.message.imageMessage?.caption || msg.message.videoMessage?.caption || '';
 
     // Update user name if available
     if (msg.pushName && user.name !== msg.pushName) {
-        updateUser(remoteJid, { name: msg.pushName });
+        updateUser(ownerId, remoteJid, { name: msg.pushName });
     }
 
     // Multi-prefix support
@@ -165,10 +171,10 @@ export const handleMessage = async (sock, msg) => {
                 command: commandName,
                 getPlugins,
                 Func,
-                // Database functions
-                getUser,
-                updateUser,
-                getAllUsers
+                // Database functions - Bound to ownerId for plugins
+                getUser: (jid) => getUser(ownerId, jid),
+                updateUser: (jid, data) => updateUser(ownerId, jid, data),
+                getAllUsers: () => getAllUsers(ownerId)
             };
 
             // Call handler with new structure

@@ -1,0 +1,28 @@
+{
+  "users": {
+    "6283175858167@s.whatsapp.net": {
+      "jid": "6283175858167@s.whatsapp.net",
+      "name": "",
+      "premium": false,
+      "limit": 100,
+      "pasangan": "",
+      "joinedAt": "2025-12-11T18:18:05.568Z"
+    },
+    "62895337278647-1632699835@g.us": {
+      "jid": "62895337278647-1632699835@g.us",
+      "name": "I",
+      "premium": false,
+      "limit": 1001,
+      "pasangan": "",
+      "joinedAt": "2025-12-11T18:18:23.523Z"
+    },
+    "120363417721042596@newsletter": {
+      "jid": "120363417721042596@newsletter",
+      "name": "",
+      "premium": false,
+      "limit": 100,
+      "pasangan": "",
+      "joinedAt": "2025-12-11T18:20:12.501Z"
+    }
+  }
+}

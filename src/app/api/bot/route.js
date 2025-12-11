@@ -129,6 +129,18 @@ export async function POST(req) {
             response.headers.set('X-RateLimit-Remaining', rateLimit.remaining.toString());
             response.headers.set('X-RateLimit-Reset', new Date(rateLimit.resetTime).toISOString());
             return response;
+        } else if (body.action === 'deleteSession') {
+            const { deleteSessionForUser } = await import('@/lib/baileys');
+            await deleteSessionForUser(userEmail);
+
+            const response = NextResponse.json({
+                message: 'Session deleted successfully',
+                userId: userEmail
+            });
+            response.headers.set('X-RateLimit-Limit', rateLimitConfigs.bot.maxRequests.toString());
+            response.headers.set('X-RateLimit-Remaining', rateLimit.remaining.toString());
+            response.headers.set('X-RateLimit-Reset', new Date(rateLimit.resetTime).toISOString());
+            return response;
         }
 
         return NextResponse.json(

@@ -223,7 +223,7 @@ class BotInstance {
                         this.emitLog('message', `Message from ${from.split('@')[0]}`, { text: text.substring(0, 50) });
                     }
 
-                    await handleMessage(this.sock, msg);
+                    await handleMessage(this.sock, msg, this.userId);
                 }
             }
         });
@@ -252,6 +252,36 @@ export const stopBotForUser = async (userId) => {
     }
 };
 
+export const deleteSessionForUser = async (userId) => {
+    // Stop the bot first
+    await stopBotForUser(userId);
+
+    // Get session path
+    const sessionData = getUserBotSession(userId);
+    const sessionDir = sessionData?.sessionPath || `session/${Buffer.from(userId).toString('base64').replace(/[/+=]/g, '-')}`;
+
+    // Remove session directory
+    try {
+        if (fs.existsSync(sessionDir)) {
+            fs.rmSync(sessionDir, { recursive: true, force: true });
+        }
+    } catch (error) {
+        console.error(`Failed to delete session directory for ${userId}:`, error);
+        throw error;
+    }
+
+    // Clear session in database (but keep the path structure for next time)
+    // We import this at the top: import { getUserBotSession, updateUserBotSession, clearUserBotSession } from './database.js';
+    // But since clearUserBotSession is not imported, let's just use updateUserBotSession which we have
+    updateUserBotSession(userId, {
+        status: 'disconnected',
+        phoneNumber: null,
+        connectedAt: null
+    });
+
+    return true;
+};
+
 export const getBotStatus = (userId) => {
     const instance = botInstances.get(userId);
 
@@ -261,7 +291,7 @@ export const getBotStatus = (userId) => {
 
     // Return default status if no instance
     const sessionData = getUserBotSession(userId);
-    const sessionDir = sessionData?.sessionPath || `session/${userId}`;
+    const sessionDir = sessionData?.sessionPath || `session/${Buffer.from(userId).toString('base64').replace(/[/+=]/g, '-')}`;
 
     let sessionFileCount = 0;
     try {

@@ -15,6 +15,7 @@ export default function LoginPage() {
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [errorDetails, setErrorDetails] = useState<string[]>([]);
     const [formData, setFormData] = useState({
         firstName: '',
         lastName: '',
@@ -32,7 +33,13 @@ export default function LoginPage() {
             const response = await fetch('/api/auth', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
+                body: JSON.stringify(isSignUp ? {
+                    action: 'register',
+                    email: formData.email,
+                    password: formData.password,
+                    firstName: formData.firstName,
+                    lastName: formData.lastName
+                } : {
                     email: formData.email,
                     password: formData.password
                 })
@@ -46,6 +53,11 @@ export default function LoginPage() {
                 router.refresh();
             } else {
                 setError(data.error || 'Login failed');
+                if (data.details && Array.isArray(data.details)) {
+                    setErrorDetails(data.details);
+                } else {
+                    setErrorDetails([]);
+                }
             }
         } catch (err) {
             setError('Network error. Please try again.');
@@ -117,8 +129,15 @@ export default function LoginPage() {
 
                             {/* Error Message */}
                             {error && (
-                                <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl">
-                                    <p className="text-red-400 text-sm">{error}</p>
+                                <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl space-y-2">
+                                    <p className="text-red-400 text-sm font-medium">{error}</p>
+                                    {errorDetails.length > 0 && (
+                                        <ul className="list-disc list-inside text-xs text-red-400/80">
+                                            {errorDetails.map((detail, index) => (
+                                                <li key={index}>{detail}</li>
+                                            ))}
+                                        </ul>
+                                    )}
                                 </div>
                             )}
 

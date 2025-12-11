@@ -168,13 +168,16 @@ export default function Dashboard() {
 
             // Get current user session to join their room
             try {
-                const sessionRes = await fetch('/api/auth/session');
+                const sessionRes = await fetch('/api/auth');
                 if (sessionRes.ok) {
-                    const sessionData = await sessionRes.json();
-                    if (sessionData?.user?.email) {
-                        // Join user-specific room
-                        socketRef.current.emit('join', sessionData.user.email);
-                        console.log('Joined room:', sessionData.user.email);
+                    const contentType = sessionRes.headers.get('content-type');
+                    if (contentType && contentType.includes('application/json')) {
+                        const sessionData = await sessionRes.json();
+                        if (sessionData?.user?.email) {
+                            // Join user-specific room
+                            socketRef.current.emit('join', sessionData.user.email);
+                            console.log('Joined room:', sessionData.user.email);
+                        }
                     }
                 }
             } catch (error) {

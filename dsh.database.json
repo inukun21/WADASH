@@ -1,42 +1,48 @@
 {
   "webUsers": {
-    "test@example.com": {
-      "email": "test@example.com",
-      "password": "password",
-      "name": "UserTest User",
-      "firstName": "UserTest",
-      "lastName": "User",
-      "role": "user",
-      "createdAt": "2025-12-06T17:56:26.395Z"
-    },
-    "ibnu@wadash.com": {
-      "email": "ibnu@wadash.com",
-      "password": "$2b$10$msKtNKwugr2nlrhIpXPDZu7WaoT11uynaGBJdm6k1J6981sSq7r5y",
-      "name": "ibnu nur ramadani",
-      "firstName": "ibnu",
-      "lastName": "nur ramadani",
-      "role": "user",
-      "createdAt": "2025-12-06T17:58:54.657Z",
-      "botSession": {
-        "status": "disconnected",
-        "phoneNumber": null,
-        "connectedAt": null,
-        "sessionPath": "session/aWJudUB3YWRhc2guY29t"
-      }
-    },
     "admin@wadash.com": {
       "email": "admin@wadash.com",
-      "password": "$2b$10$y4F08ZSXHvJ.7iuKX.m0GOh8H3eJX9yxCSxOOg35edwbGVy2S9nhW",
+      "password": "admin",
       "name": "Admin",
       "firstName": "Admin",
       "lastName": "User",
       "role": "admin",
-      "createdAt": "2025-12-08T16:54:04.230Z",
+      "createdAt": "2025-12-12T00:00:00.000Z"
+    },
+    "ibnu@wadash.com": {
+      "email": "ibnu@wadash.com",
+      "password": "$2b$10$iz1SJCzlxECYNysfN3CdK.0ukANYGiqogy1vLmGaUXUZ/Eb8OCkMy",
+      "name": "ibbnu ivbnug",
+      "firstName": "ibbnu",
+      "lastName": "ivbnug",
+      "role": "user",
+      "provider": "credentials",
+      "providerId": null,
+      "image": null,
+      "createdAt": "2025-12-11T17:41:25.307Z",
       "botSession": {
-        "status": "disconnected",
-        "phoneNumber": null,
-        "connectedAt": null,
-        "sessionPath": "session/YWRtaW5Ad2FkYXNoLmNvbQ--"
+        "status": "connected",
+        "phoneNumber": "6285135957662",
+        "connectedAt": 1765477546170,
+        "sessionPath": "session/aWJudUB3YWRhc2guY29t"
+      }
+    },
+    "user@wadash.com": {
+      "email": "user@wadash.com",
+      "password": "$2b$10$I572d6Xd5bDJuvz0dsHZI.AET7n9TjA291GUs9TIkB0V.MjKVfHbe",
+      "name": "user user",
+      "firstName": "user",
+      "lastName": "user",
+      "role": "user",
+      "provider": "credentials",
+      "providerId": null,
+      "image": null,
+      "createdAt": "2025-12-11T17:42:46.216Z",
+      "botSession": {
+        "status": "connected",
+        "phoneNumber": "6283175858167",
+        "connectedAt": 1765477085256,
+        "sessionPath": "session/dXNlckB3YWRhc2guY29t"
       }
     }
   }

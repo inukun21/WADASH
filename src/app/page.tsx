@@ -35,6 +35,14 @@ export default function Dashboard() {
     const fetchStatus = async () => {
         try {
             const res = await fetch('/api/bot');
+
+
+            // Handle unauthorized - just return, middleware will handle redirect
+            if (res.status === 401) {
+                console.log('Not authenticated');
+                return;
+            }
+
             if (!res.ok) {
                 console.error('Failed to fetch status:', res.status);
                 return;
@@ -83,11 +91,17 @@ export default function Dashboard() {
 
     const startBot = async () => {
         try {
-            await fetch('/api/bot', {
+            const res = await fetch('/api/bot', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ action: 'start' })
             });
+
+            if (res.status === 401) {
+                window.location.href = '/login';
+                return;
+            }
+
             fetchStatus();
         } catch (error) {
             console.error('Failed to start bot', error);
@@ -96,11 +110,17 @@ export default function Dashboard() {
 
     const stopBot = async () => {
         try {
-            await fetch('/api/bot', {
+            const res = await fetch('/api/bot', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ action: 'stop' })
             });
+
+            if (res.status === 401) {
+                window.location.href = '/login';
+                return;
+            }
+
             fetchStatus();
         } catch (error) {
             console.error('Failed to stop bot', error);
@@ -143,8 +163,24 @@ export default function Dashboard() {
             path: '/socket.io',
         });
 
-        socketRef.current.on('connect', () => {
+        socketRef.current.on('connect', async () => {
             console.log('Connected to Socket.IO');
+
+            // Get current user session to join their room
+            try {
+                const sessionRes = await fetch('/api/auth/session');
+                if (sessionRes.ok) {
+                    const sessionData = await sessionRes.json();
+                    if (sessionData?.user?.email) {
+                        // Join user-specific room
+                        socketRef.current.emit('join', sessionData.user.email);
+                        console.log('Joined room:', sessionData.user.email);
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to join user room:', error);
+            }
+
             setLogs(prev => [...prev, {
                 type: 'system',
                 message: 'Connected to real-time logs',

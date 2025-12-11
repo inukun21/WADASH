@@ -8,18 +8,23 @@ export function middleware(request: NextRequest) {
     const publicRoutes = ['/login', '/signup', '/register'];
     const isPublicRoute = publicRoutes.some(route => pathname.startsWith(route));
 
-    // Get auth token from cookie
-    const token = request.cookies.get('auth-token')?.value;
+    // Check for authentication - support both custom auth and NextAuth
+    const customAuthToken = request.cookies.get('auth-token')?.value;
+    const nextAuthToken =
+        request.cookies.get('next-auth.session-token')?.value ||
+        request.cookies.get('__Secure-next-auth.session-token')?.value;
 
-    // If trying to access protected route without token, redirect to login
-    if (!isPublicRoute && !token) {
+    const isAuthenticated = !!(customAuthToken || nextAuthToken);
+
+    // If trying to access protected route without authentication, redirect to login
+    if (!isPublicRoute && !isAuthenticated) {
         const loginUrl = new URL('/login', request.url);
         loginUrl.searchParams.set('redirect', pathname);
         return NextResponse.redirect(loginUrl);
     }
 
-    // If trying to access login page with valid token, redirect to dashboard
-    if (isPublicRoute && token) {
+    // If trying to access login page while authenticated, redirect to dashboard
+    if (isPublicRoute && isAuthenticated) {
         return NextResponse.redirect(new URL('/', request.url));
     }
 

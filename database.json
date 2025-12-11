@@ -51,7 +51,7 @@
     },
     "status@broadcast": {
       "jid": "status@broadcast",
-      "name": "Bargas Dwi Kurniawan",
+      "name": ".",
       "premium": false,
       "limit": 100,
       "joinedAt": "2025-12-05T14:41:52.432Z"
@@ -150,6 +150,38 @@
       "limit": 100,
       "pasangan": "",
       "joinedAt": "2025-12-06T14:35:58.988Z"
+    },
+    "189661544722561@lid": {
+      "jid": "189661544722561@lid",
+      "name": "I",
+      "premium": false,
+      "limit": 100,
+      "pasangan": "",
+      "joinedAt": "2025-12-11T15:09:52.866Z"
+    },
+    "242816512995391@lid": {
+      "jid": "242816512995391@lid",
+      "name": ".",
+      "premium": false,
+      "limit": 100,
+      "pasangan": "",
+      "joinedAt": "2025-12-11T15:14:25.312Z"
+    },
+    "120363332354098025@g.us": {
+      "jid": "120363332354098025@g.us",
+      "name": "riski topik.",
+      "premium": false,
+      "limit": 100,
+      "pasangan": "",
+      "joinedAt": "2025-12-11T15:15:03.032Z"
+    },
+    "25632952045621@lid": {
+      "jid": "25632952045621@lid",
+      "name": "I",
+      "premium": false,
+      "limit": 100,
+      "pasangan": "",
+      "joinedAt": "2025-12-11T15:22:39.848Z"
     }
   }
 }

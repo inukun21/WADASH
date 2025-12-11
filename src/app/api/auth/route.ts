@@ -1,14 +1,15 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-
-// Simple in-memory user store (in production, use a database)
-// Simple in-memory user store replaced by persistent JSON db
-import { getWebUser, createWebUser, verifyPassword } from '@/lib/database';
+import { getWebUser, createWebUser, verifyPassword as dbVerifyPassword } from '@/lib/database';
+import { checkRateLimit, rateLimitConfigs } from '@/lib/security/rateLimit';
+import { isAccountLocked, recordFailedLogin, resetFailedAttempts, getLockedUntil } from '@/lib/security/accountLockout';
+import { validatePasswordStrength, hashPassword, verifyPassword } from '@/lib/security/password';
+import { validateEmail, sanitizeEmail, sanitizeString } from '@/lib/security/validation';
 
 export async function POST(req: Request) {
     try {
         const body = await req.json();
-        const { email, password, action, firstName, lastName } = body;
+        const { email: rawEmail, password, action, firstName, lastName } = body;
 
         // Handle logout
         if (action === 'logout') {
@@ -21,14 +22,49 @@ export async function POST(req: Request) {
             });
         }
 
+        // Get client IP for rate limiting
+        const clientIp = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown';
+
         // Handle Register
         if (action === 'register') {
-            if (!email || !password || !firstName || !lastName) {
+            // Rate limiting for registration
+            const rateLimit = checkRateLimit(`register:${clientIp}`, rateLimitConfigs.login);
+            if (!rateLimit.allowed) {
+                return NextResponse.json({
+                    success: false,
+                    error: 'Too many registration attempts. Please try again later.'
+                }, { status: 429 });
+            }
+
+            if (!rawEmail || !password || !firstName || !lastName) {
                 return NextResponse.json({
                     success: false,
                     error: 'All fields are required'
                 }, { status: 400 });
             }
+
+            // Validate and sanitize email
+            const email = sanitizeEmail(rawEmail);
+            if (!validateEmail(email)) {
+                return NextResponse.json({
+                    success: false,
+                    error: 'Invalid email format'
+                }, { status: 400 });
+            }
+
+            // Validate password strength
+            const passwordValidation = validatePasswordStrength(password);
+            if (!passwordValidation.valid) {
+                return NextResponse.json({
+                    success: false,
+                    error: 'Password does not meet requirements',
+                    details: passwordValidation.errors
+                }, { status: 400 });
+            }
+
+            // Sanitize name inputs
+            const sanitizedFirstName = sanitizeString(firstName);
+            const sanitizedLastName = sanitizeString(lastName);
 
             try {
                 // Check if user exists
@@ -43,25 +79,24 @@ export async function POST(req: Request) {
                 const newUser = await createWebUser({
                     email,
                     password, // Will be hashed in createWebUser
-                    name: `${firstName} ${lastName}`,
-                    firstName,
-                    lastName,
+                    name: `${sanitizedFirstName} ${sanitizedLastName}`,
+                    firstName: sanitizedFirstName,
+                    lastName: sanitizedLastName,
                     role: 'user',
                     provider: 'credentials'
                 });
 
-                // Create session immediately
+                // Create session
                 const user = newUser;
-                // Create simple token (in production, use JWT)
-                const token = Buffer.from(`${user.email}:${Date.now()}`).toString('base64');
+                const token = Buffer.from(`${user.email}:${Date.now()}:${Math.random()}`).toString('base64');
 
-                // Set cookies
+                // Set secure cookies
                 const cookieStore = await cookies();
                 cookieStore.set('auth-token', token, {
                     httpOnly: true,
                     secure: process.env.NODE_ENV === 'production',
                     sameSite: 'lax',
-                    maxAge: 60 * 60 * 24 * 7 // 7 days
+                    maxAge: parseInt(process.env.SESSION_MAX_AGE || '86400') // 24 hours
                 });
 
                 cookieStore.set('user-data', JSON.stringify({
@@ -69,10 +104,10 @@ export async function POST(req: Request) {
                     name: user.name,
                     role: user.role
                 }), {
-                    httpOnly: false, // Accessible by client JS if needed
+                    httpOnly: false,
                     secure: process.env.NODE_ENV === 'production',
                     sameSite: 'lax',
-                    maxAge: 60 * 60 * 24 * 7
+                    maxAge: parseInt(process.env.SESSION_MAX_AGE || '86400')
                 });
 
                 return NextResponse.json({
@@ -94,29 +129,50 @@ export async function POST(req: Request) {
         }
 
         // Handle Login
-        if (!email || !password) {
+        if (!rawEmail || !password) {
             return NextResponse.json({
                 success: false,
                 error: 'Email and password are required'
             }, { status: 400 });
         }
 
-        // Find user
-        // hardcoded admin check for fallback if DB is empty/fails, or just use DB?
-        // Let's stick to DB, but maybe keep the admin backdoor if requested?
-        // User didn't request keeping backdoor, but it's "migrasi all database".
-        // I should probably ensure the "admin" user from the memory is in the new DB?
-        // No, user said "migrasi entire database", implies existing JSON.
-        // But the previous auth was in-memory hardcoded.
-        // It's better to NOT break access.
-        // I'll check DB first. If not found, check hardcoded admin ONLY if migration hasn't happened.
-        // Actually, let's just use the DB. If they want admin access, they can register or I can seed it.
-        // I will seed the admin user if it doesn't exist for convenience.
+        // Validate and sanitize email
+        const email = sanitizeEmail(rawEmail);
+        if (!validateEmail(email)) {
+            return NextResponse.json({
+                success: false,
+                error: 'Invalid email format'
+            }, { status: 400 });
+        }
 
+        // Rate limiting for login
+        const rateLimit = checkRateLimit(`login:${clientIp}`, rateLimitConfigs.login);
+        if (!rateLimit.allowed) {
+            return NextResponse.json({
+                success: false,
+                error: 'Too many login attempts. Please try again later.',
+                resetTime: new Date(rateLimit.resetTime).toISOString()
+            }, { status: 429 });
+        }
+
+        // Check account lockout
+        if (isAccountLocked(email)) {
+            const lockedUntil = getLockedUntil(email);
+            const minutesRemaining = lockedUntil ? Math.ceil((lockedUntil - Date.now()) / 60000) : 15;
+            return NextResponse.json({
+                success: false,
+                error: `Account temporarily locked due to multiple failed login attempts. Please try again in ${minutesRemaining} minutes.`,
+                lockedUntil: lockedUntil ? new Date(lockedUntil).toISOString() : null
+            }, { status: 423 });
+        }
+
+        // Find user
         let user = getWebUser(email);
 
         // Check if user exists
         if (!user) {
+            // Record failed attempt even for non-existent users (prevent user enumeration)
+            recordFailedLogin(email);
             return NextResponse.json({
                 success: false,
                 error: 'Invalid email or password'
@@ -124,27 +180,41 @@ export async function POST(req: Request) {
         }
 
         // Verify password (supports both hashed and legacy plain-text)
-        const isValidPassword = await verifyPassword(email, password);
+        const isValidPassword = await dbVerifyPassword(email, password);
         if (!isValidPassword) {
+            // Record failed login attempt
+            const lockout = recordFailedLogin(email);
+
+            if (lockout.locked) {
+                return NextResponse.json({
+                    success: false,
+                    error: 'Account locked for 15 minutes due to too many failed attempts.',
+                    lockedUntil: lockout.lockedUntil ? new Date(lockout.lockedUntil).toISOString() : null
+                }, { status: 423 });
+            }
+
             return NextResponse.json({
                 success: false,
-                error: 'Invalid email or password'
+                error: 'Invalid email or password',
+                attemptsRemaining: lockout.attemptsRemaining
             }, { status: 401 });
         }
 
-        // Create simple token (in production, use JWT)
-        const token = Buffer.from(`${user.email}:${Date.now()}`).toString('base64');
+        // Successful login - reset failed attempts
+        resetFailedAttempts(email);
 
-        // Set cookies
+        // Create session token
+        const token = Buffer.from(`${user.email}:${Date.now()}:${Math.random()}`).toString('base64');
+
+        // Set secure cookies
         const cookieStore = await cookies();
         cookieStore.set('auth-token', token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'lax',
-            maxAge: 60 * 60 * 24 * 7 // 7 days
+            maxAge: parseInt(process.env.SESSION_MAX_AGE || '86400')
         });
 
-        // Set user data cookie (non-sensitive data)
         cookieStore.set('user-data', JSON.stringify({
             email: user.email,
             name: user.name,
@@ -153,7 +223,7 @@ export async function POST(req: Request) {
             httpOnly: false,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'lax',
-            maxAge: 60 * 60 * 24 * 7 // 7 days
+            maxAge: parseInt(process.env.SESSION_MAX_AGE || '86400')
         });
 
         return NextResponse.json({

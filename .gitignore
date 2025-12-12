@@ -38,15 +38,15 @@ yarn-error.log*
 next-env.d.ts
 
 # WhatsApp Session
-session/
-*.session
+# session/
+# *.session
 
 # Database - IMPORTANT: Never commit database files with user data!
-database/
-database.json
-dsh.database.json
-*.database.json
-database/*.json
+# database/
+# database.json
+# dsh.database.json
+# *.database.json
+# database/*.json
 
 # Logs
 logs/

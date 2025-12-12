@@ -258,6 +258,22 @@ export async function GET() {
             });
         }
 
+        // Parse user data and validate user still exists in database
+        const user = JSON.parse(userData);
+        const dbUser = getWebUser(user.email);
+
+        // If user no longer exists in database, clear session
+        if (!dbUser) {
+            cookieStore.delete('auth-token');
+            cookieStore.delete('user-data');
+
+            return NextResponse.json({
+                success: false,
+                authenticated: false,
+                reason: 'User account has been deleted'
+            });
+        }
+
         return NextResponse.json({
             success: true,
             authenticated: true,

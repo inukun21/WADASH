@@ -3,9 +3,10 @@ import path from 'path';
 import bcrypt from 'bcryptjs';
 
 // Separate database files
-const WHATSAPP_DB_PATH = path.join(process.cwd(), 'database.json');
-const WEB_DB_PATH = path.join(process.cwd(), 'dsh.database.json');
-const OLD_DB_PATH = path.join(process.cwd(), 'dsh.database.json');
+// Separate database files
+const WHATSAPP_DB_PATH = path.join(process.cwd(), 'database', 'database.json');
+const WEB_DB_PATH = path.join(process.cwd(), 'database', 'dsh.database.json');
+const OLD_DB_PATH = path.join(process.cwd(), 'database', 'dsh.database.json');
 
 const whatsappDbs = {};
 
@@ -13,7 +14,7 @@ const whatsappDbs = {};
 const getDbPath = (ownerId) => {
     // Basic sanitization
     const safeId = ownerId.replace(/[^a-z0-9@.]/gi, '_').toLowerCase();
-    return path.join(process.cwd(), `database.${safeId}.json`);
+    return path.join(process.cwd(), 'database', `database.${safeId}.json`);
 };
 
 // Initialize/Get WhatsApp Database for specific owner
@@ -49,16 +50,20 @@ let webDb = { webUsers: {} };
 // Save Web Database
 export const saveWebDb = () => {
     try {
+        console.log('[DB] saveWebDb called. Path:', WEB_DB_PATH);
+        console.log('[DB] Current webDb:', JSON.stringify(webDb, null, 2));
         const tempPath = WEB_DB_PATH + '.tmp';
         fs.writeFileSync(tempPath, JSON.stringify(webDb, null, 2));
         fs.renameSync(tempPath, WEB_DB_PATH);
+        console.log('[DB] saveWebDb SUCCESS');
     } catch (e) {
-        console.error('Failed to save Web database:', e);
+        console.error('[DB] Failed to save Web database:', e);
     }
 };
 
 // Initialize Web Database (dsh.database.json)
 const initWebDb = () => {
+    console.log('[DB] initWebDb called. Path:', WEB_DB_PATH);
     if (fs.existsSync(WEB_DB_PATH)) {
         try {
             const data = fs.readFileSync(WEB_DB_PATH, 'utf-8');
@@ -67,6 +72,7 @@ const initWebDb = () => {
                 webDb = {
                     webUsers: parsed.webUsers || {}
                 };
+                console.log('[DB] Loaded webUsers:', Object.keys(webDb.webUsers));
             }
         } catch (e) {
             console.error('Failed to load Web database:', e);
@@ -80,6 +86,7 @@ const initWebDb = () => {
             webDb = { webUsers: {} };
         }
     } else {
+        console.log('[DB] WEB_DB_PATH does not exist, checking OLD_DB_PATH');
         // Check if old combined database exists and migrate
         if (fs.existsSync(OLD_DB_PATH)) {
             try {
@@ -161,6 +168,17 @@ export const getAllUsers = (ownerId) => {
 };
 
 // Web/Dashboard User Functions
+const DEFAULT_SETTINGS = {
+    autoRead: false,
+    publicMode: true,
+    botName: "WADASH Bot",
+    prefix: "!",
+    welcomeMessage: true,
+    blockCall: false,
+    ownerNumber: "",
+    multiPrefix: false
+};
+
 export const createWebUser = async (userData) => {
     const { email, password, provider = 'credentials' } = userData;
     if (webDb.webUsers[email]) {
@@ -173,6 +191,18 @@ export const createWebUser = async (userData) => {
         hashedPassword = await bcrypt.hash(password, 10);
     }
 
+    // Load global settings as template if available, otherwise use defaults
+    let initialSettings = { ...DEFAULT_SETTINGS };
+    try {
+        const globalSettingsPath = path.join(process.cwd(), 'settings.json');
+        if (fs.existsSync(globalSettingsPath)) {
+            const globalSettings = JSON.parse(fs.readFileSync(globalSettingsPath, 'utf-8'));
+            initialSettings = { ...initialSettings, ...globalSettings };
+        }
+    } catch (e) {
+        // Ignore error, use defaults
+    }
+
     webDb.webUsers[email] = {
         ...userData,
         password: hashedPassword,
@@ -180,7 +210,8 @@ export const createWebUser = async (userData) => {
         providerId: userData.providerId || null,
         image: userData.image || null,
         role: userData.role || 'user',
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        settings: initialSettings // User-specific settings
     };
     saveWebDb();
     return webDb.webUsers[email];
@@ -221,6 +252,64 @@ export const updateWebUser = async (email, data) => {
         return webDb.webUsers[email];
     }
     return null;
+};
+
+// User Settings Functions
+export const getWebUserSettings = (email) => {
+    const user = webDb.webUsers[email];
+    if (!user) return null;
+    if (!user.settings) {
+        // Initialize if missing - try to load global settings as template
+        let initialSettings = { ...DEFAULT_SETTINGS };
+        try {
+            const globalSettingsPath = path.join(process.cwd(), 'settings.json');
+            if (fs.existsSync(globalSettingsPath)) {
+                const globalSettings = JSON.parse(fs.readFileSync(globalSettingsPath, 'utf-8'));
+                initialSettings = { ...initialSettings, ...globalSettings };
+            }
+        } catch (e) {
+            // Ignore error
+        }
+
+        user.settings = initialSettings;
+        saveWebDb();
+    }
+    return user.settings;
+};
+
+export const updateWebUserSettings = (email, settings) => {
+    console.log(`[DB] Updating settings for ${email}`, settings);
+    const user = webDb.webUsers[email];
+    if (!user) {
+        console.error(`[DB] User ${email} not found in memory. Available users: ${Object.keys(webDb.webUsers).join(', ')}`);
+        // Try reloading DB
+        console.log('[DB] Attempting to reload database...');
+        if (fs.existsSync(WEB_DB_PATH)) {
+            try {
+                const data = fs.readFileSync(WEB_DB_PATH, 'utf-8');
+                const parsed = JSON.parse(data);
+                webDb.webUsers = parsed.webUsers || {};
+                console.log('[DB] Reloaded. Users:', Object.keys(webDb.webUsers).join(', '));
+            } catch (err) {
+                console.error('[DB] Failed to reload:', err);
+            }
+        }
+
+        // Retry fetch
+        if (webDb.webUsers[email]) {
+            return updateWebUserSettings(email, settings);
+        }
+
+        return null;
+    }
+
+    if (!user.settings) {
+        user.settings = { ...DEFAULT_SETTINGS };
+    }
+
+    user.settings = { ...user.settings, ...settings };
+    saveWebDb();
+    return user.settings;
 };
 
 // Legacy compatibility - deprecated

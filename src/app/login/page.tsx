@@ -10,6 +10,7 @@ export default function LoginPage() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const redirectTo = searchParams.get('redirect') || '/';
+    const reason = searchParams.get('reason');
 
     const [isSignUp, setIsSignUp] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
@@ -126,6 +127,15 @@ export default function LoginPage() {
                                     </button>
                                 </p>
                             </div>
+
+                            {/* Account Deleted Warning */}
+                            {reason === 'account_deleted' && (
+                                <div className="p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-xl">
+                                    <p className="text-yellow-400 text-sm font-medium">
+                                        Your account has been deleted by an administrator. Please contact support if you believe this is an error.
+                                    </p>
+                                </div>
+                            )}
 
                             {/* Error Message */}
                             {error && (

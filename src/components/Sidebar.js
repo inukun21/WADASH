@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LayoutDashboard, Zap, Terminal, Users, Settings, MessageSquare, LogOut, Sun, Moon } from 'lucide-react';
+import { LayoutDashboard, Zap, Terminal, Users, MessageSquare, LogOut, Sun, Moon, Settings } from 'lucide-react';
 import { useState } from 'react';
 import { useTheme } from './ThemeProvider';
 
@@ -13,6 +13,7 @@ const menuItems = [
     { name: 'Users', icon: Users, path: '/users' },
     { name: 'Settings', icon: Settings, path: '/settings' },
 ];
+
 
 export default function Sidebar() {
     const pathname = usePathname();

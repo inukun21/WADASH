@@ -122,7 +122,7 @@ if (typeof global !== 'undefined') {
 // Initial load
 loadPlugins();
 
-export const handleMessage = async (sock, msg, ownerId) => {
+export const handleMessage = async (sock, msg, ownerId, settings = {}) => {
     if (!msg.message) return;
 
     // Reject if no ownerId
@@ -141,9 +141,17 @@ export const handleMessage = async (sock, msg, ownerId) => {
         updateUser(ownerId, remoteJid, { name: msg.pushName });
     }
 
-    // Multi-prefix support
-    const prefixes = ['!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '<', '>', ',', '.', '/', '?', ':', '"', ';', "'", '{', '}', '[', ']', '\\', '|'];
-    const usedPrefix = prefixes.find(prefix => messageContent.startsWith(prefix));
+    // Settings logic
+    const { prefix = '!', publicMode = true } = settings;
+
+    // Public Mode Check
+    const isOwner = remoteJid.includes(ownerId.replace(/[^0-9]/g, '')) || msg.key.fromMe;
+    if (!publicMode && !isOwner && !msg.key.fromMe) {
+        return; // Ignore messages from others if not in public mode
+    }
+
+    // Prefix check
+    const usedPrefix = messageContent.trim().startsWith(prefix) ? prefix : null;
 
     if (!usedPrefix) return;
 

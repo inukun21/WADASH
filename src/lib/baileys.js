@@ -7,7 +7,7 @@ import makeWASocket, {
 import pino from 'pino';
 import fs from 'fs';
 import path from 'path';
-import { getUserBotSession, updateUserBotSession } from './database.js';
+import { getUserBotSession, updateUserBotSession, getWebUserSettings } from './database.js';
 
 // Store multiple bot instances: Map<userId, BotInstance>
 const botInstances = new Map();
@@ -213,8 +213,14 @@ class BotInstance {
                 for (const msg of messages) {
                     if (!msg.message) continue;
 
-                    // Auto Read Logic (get from settings if needed)
-                    // For now, we'll skip auto-read to keep it simple
+                    // Get user settings
+                    const settings = getWebUserSettings(this.userId) || {};
+                    const { autoRead, publicMode, prefix } = settings;
+
+                    // Auto Read Logic
+                    if (autoRead) {
+                        await this.sock.readMessages([msg.key]);
+                    }
 
                     const from = msg.key.remoteJid;
                     const text = msg.message?.conversation || msg.message?.extendedTextMessage?.text || '';
@@ -223,8 +229,27 @@ class BotInstance {
                         this.emitLog('message', `Message from ${from.split('@')[0]}`, { text: text.substring(0, 50) });
                     }
 
-                    await handleMessage(this.sock, msg, this.userId);
+                    // Pass settings to handler
+                    await handleMessage(this.sock, msg, this.userId, settings);
                 }
+            }
+        });
+
+        // Call event listener for blocking calls
+        this.sock.ev.on('call', async (callData) => {
+            try {
+                const settings = getWebUserSettings(this.userId) || {};
+
+                if (settings.blockCall) {
+                    for (const call of callData) {
+                        if (call.status === 'offer') {
+                            this.emitLog('system', `Rejecting call from ${call.from}`);
+                            await this.sock.rejectCall(call.id, call.from);
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Error handling call:', error);
             }
         });
 

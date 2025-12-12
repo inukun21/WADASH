@@ -3,6 +3,7 @@
 import { usePathname } from 'next/navigation';
 import Sidebar from './Sidebar';
 import { ReactNode } from 'react';
+import { useSessionValidator } from '@/hooks/useSessionValidator';
 
 export default function ConditionalLayout({ children }: { children: ReactNode }) {
     const pathname = usePathname();
@@ -10,6 +11,11 @@ export default function ConditionalLayout({ children }: { children: ReactNode })
     // Pages that should not have sidebar
     const noSidebarPages = ['/login', '/signup', '/register'];
     const shouldShowSidebar = !noSidebarPages.includes(pathname);
+
+    // Enable session validation only for authenticated pages
+    if (shouldShowSidebar) {
+        useSessionValidator();
+    }
 
     if (!shouldShowSidebar) {
         // Render without sidebar for login/signup pages

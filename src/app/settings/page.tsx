@@ -1,36 +1,62 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Save, Bell, Shield, Smartphone, Trash2, RefreshCw } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function SettingsPage() {
-    const [loading, setLoading] = useState(false);
+    const router = useRouter();
+    const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState({ type: '', text: '' });
+    const [authenticated, setAuthenticated] = useState(false);
 
-    const [botConfig, setBotConfig] = useState({
-        botName: 'WADASH Bot',
-        prefix: '!',
-        publicMode: true,
+    const [settings, setSettings] = useState({
+        botName: '',
         autoRead: false,
+        blockCall: false,
+        ownerNumber: '',
+        prefix: '!',
+        multiPrefix: false,
+        publicMode: true,
         welcomeMessage: true
     });
 
-    // Fetch settings on mount
+    // Check authentication
     useEffect(() => {
-        fetchSettings();
-    }, []);
+        const checkAuth = async () => {
+            try {
+                const response = await fetch('/api/auth');
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data?.user?.email) {
+                        setAuthenticated(true);
+                        fetchSettings();
+                    } else {
+                        router.push('/login');
+                    }
+                } else {
+                    router.push('/login');
+                }
+            } catch (error) {
+                console.error('Auth check failed:', error);
+                router.push('/login');
+            }
+        };
+        checkAuth();
+    }, [router]);
 
     const fetchSettings = async () => {
-        setLoading(true);
         try {
-            const res = await fetch('/api/settings');
-            const data = await res.json();
-            if (data.success) {
-                setBotConfig(prev => ({ ...prev, ...data.settings }));
+            const response = await fetch('/api/settings');
+            if (response.ok) {
+                const data = await response.json();
+                setSettings(data.settings);
+            } else {
+                setMessage({ type: 'error', text: 'Failed to load settings' });
             }
         } catch (error) {
-            console.error('Failed to fetch settings:', error);
+            console.error('Error fetching settings:', error);
+            setMessage({ type: 'error', text: 'Failed to load settings' });
         } finally {
             setLoading(false);
         }
@@ -41,256 +67,225 @@ export default function SettingsPage() {
         setMessage({ type: '', text: '' });
 
         try {
-            const res = await fetch('/api/settings', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(botConfig)
+            const response = await fetch('/api/settings', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(settings),
             });
-            const data = await res.json();
 
-            if (data.success) {
+            const data = await response.json();
+
+            if (response.ok) {
                 setMessage({ type: 'success', text: 'Settings saved successfully!' });
-                setTimeout(() => setMessage({ type: '', text: '' }), 3000);
+                setSettings(data.settings);
             } else {
-                setMessage({ type: 'error', text: 'Failed to save settings' });
+                setMessage({ type: 'error', text: data.error || 'Failed to save settings' });
             }
         } catch (error) {
-            setMessage({ type: 'error', text: 'Network error' });
+            console.error('Error saving settings:', error);
+            setMessage({ type: 'error', text: 'Failed to save settings' });
         } finally {
             setSaving(false);
         }
     };
 
-    const handleRestartBot = async () => {
-        setMessage({ type: '', text: '' });
-        try {
-            const res = await fetch('/api/bot', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'stop' })
-            });
-
-            if (res.ok) {
-                // Wait a bit then start
-                setTimeout(async () => {
-                    const resStart = await fetch('/api/bot', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ action: 'start' })
-                    });
-
-                    if (resStart.ok) {
-                        setMessage({ type: 'success', text: 'Bot restarted successfully!' });
-                        setTimeout(() => setMessage({ type: '', text: '' }), 3000);
-                    } else {
-                        setMessage({ type: 'error', text: 'Failed to start bot' });
-                    }
-                }, 1000);
-            } else {
-                setMessage({ type: 'error', text: 'Failed to stop bot' });
-            }
-        } catch (error) {
-            setMessage({ type: 'error', text: 'Network error' });
-        }
+    const handleChange = (key: string, value: any) => {
+        setSettings(prev => ({ ...prev, [key]: value }));
     };
 
-    const handleDeleteSession = async () => {
-        if (!confirm('Are you sure you want to delete your session? This will disconnect the bot.')) return;
-
-        setMessage({ type: '', text: '' });
-        try {
-            const res = await fetch('/api/bot', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'deleteSession' })
-            });
-
-            const data = await res.json();
-
-            if (res.ok) {
-                setMessage({ type: 'success', text: 'Session deleted successfully!' });
-                setTimeout(() => setMessage({ type: '', text: '' }), 3000);
-            } else {
-                setMessage({ type: 'error', text: data.error || 'Failed to delete session' });
-            }
-        } catch (error) {
-            setMessage({ type: 'error', text: 'Network error' });
-        }
-    };
+    if (loading || !authenticated) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-violet-500 mx-auto mb-4"></div>
+                    <p className="text-[var(--muted)]">Loading settings...</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
-        <div className="space-y-8 animate-fade-in">
+        <div className="space-y-8">
             {/* Header */}
-            <div>
-                <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-neutral-400">
-                    Settings
-                </h1>
-                <p className="text-[var(--muted)] mt-1">Configure your bot preferences and system settings</p>
-            </div>
+            <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h2 className="text-4xl font-bold tracking-tight text-[var(--foreground)]">
+                        Bot Settings
+                    </h2>
+                    <p className="text-[var(--muted)] mt-2 text-lg">Configure your WhatsApp bot preferences</p>
+                </div>
+            </header>
 
-            {/* Message Toast */}
+            {/* Message Alert */}
             {message.text && (
-                <div className={`fixed top-4 right-4 z-50 px-6 py-3 rounded-xl shadow-2xl backdrop-blur-xl border flex items-center gap-2 animate-slide-in ${message.type === 'success'
-                    ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
-                    : 'bg-red-500/10 border-red-500/20 text-red-400'
+                <div className={`p-4 rounded-2xl border backdrop-blur-xl ${message.type === 'success'
+                        ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400'
+                        : 'bg-red-500/10 border-red-500/50 text-red-400'
                     }`}>
-                    <div className={`w-2 h-2 rounded-full ${message.type === 'success' ? 'bg-emerald-400' : 'bg-red-400'}`} />
                     {message.text}
                 </div>
             )}
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Left Column - General Settings */}
-                <div className="lg:col-span-2 space-y-6">
-                    {/* Bot Configuration Card */}
-                    <div className="bg-[var(--card-bg)] border border-[var(--border)] rounded-3xl p-6 md:p-8">
-                        <div className="flex items-center gap-3 mb-6">
-                            <div className="w-10 h-10 rounded-xl bg-violet-500/10 flex items-center justify-center text-violet-400">
-                                <Smartphone className="w-5 h-5" />
+            {/* Settings Cards */}
+            <div className="space-y-6">
+                {/* General Settings */}
+                <div className="bg-[var(--card-bg)] backdrop-blur-xl rounded-[2.5rem] p-8 border border-[var(--border)] relative overflow-hidden group hover:bg-white/10 transition-all duration-500">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-violet-500/20 rounded-full blur-3xl -mr-16 -mt-16 group-hover:bg-violet-500/30 transition-colors" />
+                    <div className="relative z-10">
+                        <h3 className="text-2xl font-bold text-[var(--foreground)] mb-6 flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center text-blue-400">
+                                <span className="text-xl">⚙️</span>
                             </div>
-                            <div>
-                                <h2 className="text-xl font-bold text-[var(--foreground)]">Bot Configuration</h2>
-                                <p className="text-sm text-[var(--muted)]">Manage basic bot behavior</p>
-                            </div>
-                        </div>
+                            General Settings
+                        </h3>
 
                         <div className="space-y-6">
-                            <div className="grid md:grid-cols-2 gap-6">
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium text-[var(--foreground)]">Bot Name</label>
-                                    <input
-                                        type="text"
-                                        value={botConfig.botName}
-                                        onChange={(e) => setBotConfig({ ...botConfig, botName: e.target.value })}
-                                        className="w-full px-4 py-3 bg-[var(--foreground)]/5 border border-[var(--border)] rounded-xl text-[var(--foreground)] focus:outline-none focus:border-violet-500/50 transition-all"
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium text-[var(--foreground)]">Command Prefix</label>
-                                    <input
-                                        type="text"
-                                        value={botConfig.prefix}
-                                        onChange={(e) => setBotConfig({ ...botConfig, prefix: e.target.value })}
-                                        className="w-full px-4 py-3 bg-[var(--foreground)]/5 border border-[var(--border)] rounded-xl text-[var(--foreground)] focus:outline-none focus:border-violet-500/50 transition-all"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="space-y-4 pt-4 border-t border-[var(--border)]">
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <p className="font-medium text-[var(--foreground)]">Public Mode</p>
-                                        <p className="text-sm text-[var(--muted)]">Allow everyone to use the bot</p>
-                                    </div>
-                                    <label className="relative inline-flex items-center cursor-pointer">
-                                        <input type="checkbox" checked={botConfig.publicMode} onChange={(e) => setBotConfig({ ...botConfig, publicMode: e.target.checked })} className="sr-only peer" />
-                                        <div className="w-11 h-6 bg-[var(--foreground)]/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-violet-600"></div>
-                                    </label>
-                                </div>
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <p className="font-medium text-[var(--foreground)]">Auto Read</p>
-                                        <p className="text-sm text-[var(--muted)]">Automatically mark messages as read</p>
-                                    </div>
-                                    <label className="relative inline-flex items-center cursor-pointer">
-                                        <input type="checkbox" checked={botConfig.autoRead} onChange={(e) => setBotConfig({ ...botConfig, autoRead: e.target.checked })} className="sr-only peer" />
-                                        <div className="w-11 h-6 bg-[var(--foreground)]/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-violet-600"></div>
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="mt-8 flex justify-end">
-                            <button
-                                onClick={handleSave}
-                                disabled={saving}
-                                className="flex items-center gap-2 px-6 py-3 bg-white text-[var(--background)] font-bold rounded-xl hover:bg-neutral-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                {saving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                                <span>{saving ? 'Saving...' : 'Save Changes'}</span>
-                            </button>
-                        </div>
-                    </div>
-
-                    {/* Notifications Card */}
-                    <div className="bg-[var(--card-bg)] border border-[var(--border)] rounded-3xl p-6 md:p-8">
-                        <div className="flex items-center gap-3 mb-6">
-                            <div className="w-10 h-10 rounded-xl bg-fuchsia-500/10 flex items-center justify-center text-fuchsia-400">
-                                <Bell className="w-5 h-5" />
-                            </div>
+                            {/* Bot Name */}
                             <div>
-                                <h2 className="text-xl font-bold text-[var(--foreground)]">Notifications</h2>
-                                <p className="text-sm text-[var(--muted)]">Configure alert preferences</p>
+                                <label className="block text-sm font-medium text-[var(--muted)] mb-2">
+                                    Bot Name
+                                </label>
+                                <input
+                                    type="text"
+                                    value={settings.botName}
+                                    onChange={(e) => handleChange('botName', e.target.value)}
+                                    className="w-full px-4 py-3 bg-[var(--background)] border border-[var(--border)] rounded-2xl text-[var(--foreground)] placeholder-[var(--muted)] focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all"
+                                    placeholder="Enter bot name"
+                                />
                             </div>
-                        </div>
-                        {/* Placeholder for notification settings */}
-                        <div className="p-4 bg-[var(--foreground)]/5 rounded-xl border border-[var(--border)] text-center text-[var(--muted)] text-sm">
-                            Notification settings coming soon...
+
+                            {/* Prefix */}
+                            <div>
+                                <label className="block text-sm font-medium text-[var(--muted)] mb-2">
+                                    Command Prefix
+                                </label>
+                                <input
+                                    type="text"
+                                    value={settings.prefix}
+                                    onChange={(e) => handleChange('prefix', e.target.value)}
+                                    className="w-full px-4 py-3 bg-[var(--background)] border border-[var(--border)] rounded-2xl text-[var(--foreground)] placeholder-[var(--muted)] focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all"
+                                    placeholder="!"
+                                    maxLength={3}
+                                />
+                                <p className="mt-1 text-xs text-[var(--muted)]">Character(s) that trigger bot commands</p>
+                            </div>
+
+                            {/* Owner Number */}
+                            <div>
+                                <label className="block text-sm font-medium text-[var(--muted)] mb-2">
+                                    Owner Number
+                                </label>
+                                <input
+                                    type="text"
+                                    value={settings.ownerNumber}
+                                    onChange={(e) => handleChange('ownerNumber', e.target.value.replace(/[^0-9]/g, ''))}
+                                    className="w-full px-4 py-3 bg-[var(--background)] border border-[var(--border)] rounded-2xl text-[var(--foreground)] placeholder-[var(--muted)] focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all"
+                                    placeholder="628123456789"
+                                    maxLength={15}
+                                />
+                                <p className="mt-1 text-xs text-[var(--muted)]">WhatsApp number without + or spaces (e.g., 628123456789)</p>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                {/* Right Column - Danger Zone & Info */}
-                <div className="space-y-6">
-                    {/* Session Management */}
-                    <div className="bg-[var(--card-bg)] border border-[var(--border)] rounded-3xl p-6">
-                        <div className="flex items-center gap-3 mb-6">
-                            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400">
-                                <Shield className="w-5 h-5" />
+                {/* Bot Behavior */}
+                <div className="bg-[var(--card-bg)] backdrop-blur-xl rounded-[2.5rem] p-8 border border-[var(--border)] relative overflow-hidden group hover:bg-white/10 transition-all duration-500">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-fuchsia-500/20 rounded-full blur-3xl -mr-16 -mt-16 group-hover:bg-fuchsia-500/30 transition-colors" />
+                    <div className="relative z-10">
+                        <h3 className="text-2xl font-bold text-[var(--foreground)] mb-6 flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-purple-500/20 flex items-center justify-center text-purple-400">
+                                <span className="text-xl">🤖</span>
                             </div>
-                            <div>
-                                <h2 className="text-xl font-bold text-[var(--foreground)]">Session</h2>
-                                <p className="text-sm text-[var(--muted)]">Connection security</p>
-                            </div>
-                        </div>
+                            Bot Behavior
+                        </h3>
 
                         <div className="space-y-4">
-                            <button
-                                onClick={handleRestartBot}
-                                className="w-full flex items-center justify-between p-4 bg-[var(--foreground)]/5 hover:bg-[var(--foreground)]/10 rounded-xl transition-colors group"
-                            >
-                                <div className="flex items-center gap-3">
-                                    <RefreshCw className="w-5 h-5 text-[var(--muted)] group-hover:text-[var(--foreground)] transition-colors" />
-                                    <span className="text-[var(--foreground)] group-hover:text-[var(--foreground)]">Restart Bot</span>
-                                </div>
-                            </button>
+                            <ToggleSwitch
+                                label="Auto Read Messages"
+                                description="Automatically mark messages as read"
+                                checked={settings.autoRead}
+                                onChange={(checked: boolean) => handleChange('autoRead', checked)}
+                            />
 
-                            <div className="pt-4 border-t border-[var(--border)]">
-                                <h3 className="text-red-400 font-medium mb-2 text-sm uppercase tracking-wider">Danger Zone</h3>
-                                <button
-                                    onClick={handleDeleteSession}
-                                    className="w-full flex items-center justify-between p-4 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 rounded-xl transition-colors group"
-                                >
-                                    <div className="flex items-center gap-3">
-                                        <Trash2 className="w-5 h-5 text-red-400" />
-                                        <span className="text-red-400 font-medium">Delete Session</span>
-                                    </div>
-                                </button>
-                                <p className="text-xs text-[var(--muted)] mt-2">
-                                    Deleting session will disconnect the bot and require re-scanning QR code.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
+                            <ToggleSwitch
+                                label="Block Calls"
+                                description="Automatically reject incoming calls"
+                                checked={settings.blockCall}
+                                onChange={(checked: boolean) => handleChange('blockCall', checked)}
+                            />
 
-                    {/* System Info */}
-                    <div className="bg-gradient-to-br from-violet-600 to-fuchsia-600 rounded-3xl p-6 text-[var(--foreground)] relative overflow-hidden">
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--foreground)]/10 rounded-full blur-3xl -mr-16 -mt-16" />
-                        <h3 className="text-lg font-bold mb-1 relative z-10">WADASH Pro</h3>
-                        <p className="text-[var(--foreground)]/80 text-sm mb-4 relative z-10">Version 1.0.0</p>
-                        <div className="space-y-2 relative z-10">
-                            <div className="flex justify-between text-sm">
-                                <span className="text-[var(--foreground)]/70">Node Version</span>
-                                <span className="font-mono">v18.x</span>
-                            </div>
-                            <div className="flex justify-between text-sm">
-                                <span className="text-[var(--foreground)]/70">Platform</span>
-                                <span className="font-mono">win32</span>
-                            </div>
+                            <ToggleSwitch
+                                label="Public Mode"
+                                description="Allow anyone to use bot commands"
+                                checked={settings.publicMode}
+                                onChange={(checked: boolean) => handleChange('publicMode', checked)}
+                            />
+
+                            <ToggleSwitch
+                                label="Welcome Message"
+                                description="Send welcome message to new users"
+                                checked={settings.welcomeMessage}
+                                onChange={(checked: boolean) => handleChange('welcomeMessage', checked)}
+                            />
+
+                            <ToggleSwitch
+                                label="Multi-Prefix Support"
+                                description="Enable support for multiple command prefixes"
+                                checked={settings.multiPrefix}
+                                onChange={(checked: boolean) => handleChange('multiPrefix', checked)}
+                            />
                         </div>
                     </div>
                 </div>
             </div>
+
+            {/* Save Button */}
+            <div className="flex justify-end">
+                <button
+                    onClick={handleSave}
+                    disabled={saving}
+                    className="px-8 py-4 bg-gradient-to-r from-violet-600 to-fuchsia-600 rounded-[2rem] font-bold text-white shadow-[0_10px_30px_rgba(124,58,237,0.3)] hover:shadow-[0_15px_40px_rgba(124,58,237,0.4)] hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
+                >
+                    {saving ? (
+                        <span className="flex items-center gap-2">
+                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                            Saving...
+                        </span>
+                    ) : (
+                        'Save Settings'
+                    )}
+                </button>
+            </div>
+        </div>
+    );
+}
+
+// Toggle Switch Component
+function ToggleSwitch({ label, description, checked, onChange }: {
+    label: string;
+    description: string;
+    checked: boolean;
+    onChange: (checked: boolean) => void;
+}) {
+    return (
+        <div className="flex items-center justify-between p-4 bg-[var(--background)]/30 rounded-2xl border border-[var(--border)]/50 hover:border-[var(--border)] transition-all">
+            <div className="flex-1">
+                <h3 className="text-[var(--foreground)] font-medium">{label}</h3>
+                <p className="text-sm text-[var(--muted)] mt-1">{description}</p>
+            </div>
+            <button
+                onClick={() => onChange(!checked)}
+                className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 focus:ring-offset-[var(--background)] ${checked ? 'bg-violet-500' : 'bg-[var(--border)]'
+                    }`}
+            >
+                <span
+                    className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform shadow-lg ${checked ? 'translate-x-6' : 'translate-x-1'
+                        }`}
+                />
+            </button>
         </div>
     );
 }

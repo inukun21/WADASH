@@ -1,72 +1,158 @@
 import { NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
+import { cookies } from 'next/headers';
+import { getWebUserSettings, updateWebUserSettings } from '@/lib/database';
 
-// Path to settings file
-const SETTINGS_PATH = path.join(process.cwd(), 'settings.json');
+// GET /api/settings - Get current user's settings
+export async function GET(request) {
+    try {
+        // Check authentication using cookies
+        const cookieStore = await cookies();
+        const token = cookieStore.get('auth-token')?.value;
+        const userData = cookieStore.get('user-data')?.value;
 
-// Helper to read settings
-const getSettings = () => {
-    if (fs.existsSync(SETTINGS_PATH)) {
-        try {
-            const data = fs.readFileSync(SETTINGS_PATH, 'utf-8');
-            return JSON.parse(data);
-        } catch (error) {
-            console.error('Error reading settings:', error);
-            return {};
+        if (!token || !userData) {
+            return NextResponse.json(
+                { error: 'Unauthorized' },
+                { status: 401 }
+            );
         }
-    }
-    return {};
-};
 
-// Helper to save settings
-const saveSettings = (newSettings) => {
-    try {
-        const currentSettings = getSettings();
-        const updatedSettings = { ...currentSettings, ...newSettings };
-        fs.writeFileSync(SETTINGS_PATH, JSON.stringify(updatedSettings, null, 2));
-        return true;
-    } catch (error) {
-        console.error('Error saving settings:', error);
-        return false;
-    }
-};
+        const user = JSON.parse(userData);
+        const settings = getWebUserSettings(user.email);
 
-export async function GET() {
-    try {
-        const settings = getSettings();
-        return NextResponse.json({
-            success: true,
-            settings
-        });
+        if (!settings) {
+            return NextResponse.json(
+                { error: 'Settings not found' },
+                { status: 404 }
+            );
+        }
+
+        return NextResponse.json({ settings });
     } catch (error) {
+        console.error('Error fetching settings:', error);
         return NextResponse.json(
-            { success: false, error: 'Failed to fetch settings' },
+            { error: 'Failed to fetch settings' },
             { status: 500 }
         );
     }
 }
 
-export async function POST(req) {
+// PUT /api/settings - Update current user's settings
+export async function PUT(request) {
     try {
-        const body = await req.json();
+        // Check authentication using cookies
+        const cookieStore = await cookies();
+        const token = cookieStore.get('auth-token')?.value;
+        const userData = cookieStore.get('user-data')?.value;
 
-        if (saveSettings(body)) {
-            return NextResponse.json({
-                success: true,
-                message: 'Settings saved successfully',
-                settings: body
-            });
-        } else {
+        if (!token || !userData) {
             return NextResponse.json(
-                { success: false, error: 'Failed to save settings' },
+                { error: 'Unauthorized' },
+                { status: 401 }
+            );
+        }
+
+        const user = JSON.parse(userData);
+        const body = await request.json();
+
+        // Validate settings
+        const allowedSettings = [
+            'autoRead',
+            'publicMode',
+            'botName',
+            'prefix',
+            'welcomeMessage',
+            'blockCall',
+            'ownerNumber',
+            'multiPrefix'
+        ];
+
+        const settings = {};
+        for (const key of allowedSettings) {
+            if (key in body) {
+                settings[key] = body[key];
+            }
+        }
+
+        // Validate types
+        if ('autoRead' in settings && typeof settings.autoRead !== 'boolean') {
+            return NextResponse.json(
+                { error: 'autoRead must be a boolean' },
+                { status: 400 }
+            );
+        }
+        if ('publicMode' in settings && typeof settings.publicMode !== 'boolean') {
+            return NextResponse.json(
+                { error: 'publicMode must be a boolean' },
+                { status: 400 }
+            );
+        }
+        if ('welcomeMessage' in settings && typeof settings.welcomeMessage !== 'boolean') {
+            return NextResponse.json(
+                { error: 'welcomeMessage must be a boolean' },
+                { status: 400 }
+            );
+        }
+        if ('blockCall' in settings && typeof settings.blockCall !== 'boolean') {
+            return NextResponse.json(
+                { error: 'blockCall must be a boolean' },
+                { status: 400 }
+            );
+        }
+        if ('multiPrefix' in settings && typeof settings.multiPrefix !== 'boolean') {
+            return NextResponse.json(
+                { error: 'multiPrefix must be a boolean' },
+                { status: 400 }
+            );
+        }
+        if ('botName' in settings && typeof settings.botName !== 'string') {
+            return NextResponse.json(
+                { error: 'botName must be a string' },
+                { status: 400 }
+            );
+        }
+        if ('prefix' in settings && typeof settings.prefix !== 'string') {
+            return NextResponse.json(
+                { error: 'prefix must be a string' },
+                { status: 400 }
+            );
+        }
+        if ('ownerNumber' in settings && typeof settings.ownerNumber !== 'string') {
+            return NextResponse.json(
+                { error: 'ownerNumber must be a string' },
+                { status: 400 }
+            );
+        }
+
+        // Validate owner number format if provided
+        if (settings.ownerNumber && settings.ownerNumber.trim()) {
+            const cleanNumber = settings.ownerNumber.replace(/[^0-9]/g, '');
+            if (cleanNumber.length < 10 || cleanNumber.length > 15) {
+                return NextResponse.json(
+                    { error: 'Owner number must be between 10-15 digits' },
+                    { status: 400 }
+                );
+            }
+        }
+
+        const updatedSettings = updateWebUserSettings(user.email, settings);
+
+        if (!updatedSettings) {
+            return NextResponse.json(
+                { error: 'Failed to update settings' },
                 { status: 500 }
             );
         }
+
+        return NextResponse.json({
+            success: true,
+            settings: updatedSettings
+        });
     } catch (error) {
+        console.error('Error updating settings:', error);
         return NextResponse.json(
-            { success: false, error: 'Invalid request body' },
-            { status: 400 }
+            { error: 'Failed to update settings' },
+            { status: 500 }
         );
     }
 }

@@ -1,0 +1,88 @@
+{
+  "webUsers": {
+    "inu@inu.me": {
+      "email": "inu@inu.me",
+      "password": "$2b$10$QhnPRHwD6GaTD.7w1GFNRu5YtMyHuHa80KHMNaAD2aBe273b1PTBC",
+      "name": "inu inr",
+      "firstName": "inu",
+      "lastName": "inr",
+      "role": "user",
+      "provider": "credentials",
+      "providerId": null,
+      "image": null,
+      "createdAt": "2025-12-12T16:12:56.571Z",
+      "botSession": {
+        "status": "disconnected",
+        "phoneNumber": null,
+        "connectedAt": null,
+        "sessionPath": "session/aW51QGludS5tZQ--"
+      },
+      "settings": {
+        "autoRead": false,
+        "publicMode": true,
+        "botName": "Inu BOT",
+        "prefix": "!",
+        "welcomeMessage": true,
+        "blockCall": false,
+        "ownerNumber": "",
+        "multiPrefix": true
+      }
+    },
+    "inuu@wadash.me": {
+      "email": "inuu@wadash.me",
+      "password": "$2b$10$b1My7DFaNkQofkpQAKFVMekKQhrFXBeXfSYijNrahAapA/NjrKyhy",
+      "name": "ibnunu nuu",
+      "firstName": "ibnunu",
+      "lastName": "nuu",
+      "role": "user",
+      "provider": "credentials",
+      "providerId": null,
+      "image": null,
+      "createdAt": "2025-12-19T03:59:01.260Z",
+      "settings": {
+        "autoRead": false,
+        "publicMode": true,
+        "botName": "WADASH Bot",
+        "prefix": "!",
+        "welcomeMessage": true,
+        "blockCall": false,
+        "ownerNumber": "",
+        "multiPrefix": false
+      },
+      "botSession": {
+        "status": "disconnected",
+        "phoneNumber": null,
+        "connectedAt": null,
+        "sessionPath": "session/aW51dUB3YWRhc2gubWU-"
+      }
+    },
+    "inu@wadash.me": {
+      "email": "inu@wadash.me",
+      "password": "$2b$10$.5mRB6kFFoJjSnRwFu9.3.wk2LRUYLRX0DyqeSKp69at1DVKE5RSa",
+      "name": "inu nu",
+      "firstName": "inu",
+      "lastName": "nu",
+      "role": "user",
+      "provider": "credentials",
+      "providerId": null,
+      "image": null,
+      "createdAt": "2025-12-20T16:52:28.135Z",
+      "settings": {
+        "autoRead": false,
+        "publicMode": true,
+        "botName": "WADASH Bot",
+        "prefix": "!",
+        "welcomeMessage": true,
+        "blockCall": false,
+        "ownerNumber": "",
+        "multiPrefix": false
+      },
+      "botSession": {
+        "status": "disconnected",
+        "phoneNumber": null,
+        "connectedAt": null,
+        "sessionPath": "session/aW51QHdhZGFzaC5tZQ--"
+      }
+    }
+  }
+}
